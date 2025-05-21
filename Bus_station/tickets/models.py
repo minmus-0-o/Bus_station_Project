@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Trip(models.Model):
     origin = models.CharField(max_length=100)  # Пункт отправления
@@ -12,10 +13,9 @@ class Trip(models.Model):
 
 class Order(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)  # Связь с рейсом
-    customer_name = models.CharField(max_length=100)  # Имя клиента
-    customer_email = models.EmailField()  # Email клиента
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Связь с пользователем
     tickets_count = models.IntegerField()  # Количество билетов
     created_at = models.DateTimeField(auto_now_add=True)  # Дата заказа
 
     def __str__(self):
-        return f"Order by {self.customer_name} for {self.trip}"
+        return f"Order by {self.user.username} for {self.trip}"

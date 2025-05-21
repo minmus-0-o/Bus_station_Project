@@ -8,13 +8,17 @@
     <div class="container">
         <h1 class="my-4">Доступные рейсы</h1>
         {% if user.is_authenticated %}
-            <a href="{% url 'add_trip' %}" class="btn btn-success mb-3">Добавить рейс</a>
+            <a href="{% url 'user_profile' %}" class="btn btn-info mb-3">Личный кабинет</a>
+            {% if user.is_staff %}
+                <a href="{% url 'add_trip' %}" class="btn btn-success mb-3">Добавить рейс</a>
+            {% endif %}
             <form action="{% url 'logout' %}" method="post" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger mb-3">Выйти</button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-primary mb-3">Вход для персонала</a>
+            <a href="{% url 'login' %}" class="btn btn-primary mb-3">Вход</a>
+            <a href="{% url 'register' %}" class="btn btn-primary mb-3">Регистрация</a>
         {% endif %}
         <table class="table table-striped">
             <thead>
@@ -35,7 +39,13 @@
                     <td>{{ trip.departure_time }}</td>
                     <td>{{ trip.price }} руб.</td>
                     <td>{{ trip.seats_available }}</td>
-                    <td><a href="{% url 'create_order' trip.id %}" class="btn btn-primary">Купить</a></td>
+                    <td>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'create_order' trip.id %}" class="btn btn-primary">Купить</a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">Войти для покупки</a>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

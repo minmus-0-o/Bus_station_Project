@@ -11,14 +11,6 @@
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-                <label for="customer_name" class="form-label">Имя</label>
-                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-            </div>
-            <div class="mb-3">
-                <label for="customer_email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="customer_email" name="customer_email" required>
-            </div>
-            <div class="mb-3">
                 <label for="tickets_count" class="form-label">Количество билетов</label>
                 <input type="number" class="form-control" id="tickets_count" name="tickets_count" min="1" max="{{ trip.seats_available }}" required>
             </div>
