@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from .models import Trip, Order
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
@@ -9,9 +10,10 @@ from django.contrib.auth import login
 class TripForm(forms.ModelForm):
     class Meta:
         model = Trip
-        fields = ['origin', 'destination', 'departure_time', 'price', 'seats_available']
+        fields = ['origin', 'destination', 'departure_time', 'price', 'seats_available', 'company']
         widgets = {
             'departure_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'company': forms.Select(),  # Выпадающий список для компаний
         }
 
 def trip_list(request):
@@ -26,7 +28,7 @@ def create_order(request, trip_id):
         if tickets_count <= trip.seats_available:
             Order.objects.create(
                 trip=trip,
-                user=request.user,  # Привязываем заказ к текущему пользователю
+                user=request.user,
                 tickets_count=tickets_count
             )
             trip.seats_available -= tickets_count
@@ -34,7 +36,7 @@ def create_order(request, trip_id):
             return redirect('trip_list')
     return render(request, 'tickets/create_order.html', {'trip': trip})
 
-@login_required
+@staff_member_required
 def add_trip(request):
     if request.method == 'POST':
         form = TripForm(request.POST)
@@ -50,7 +52,7 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Автоматический вход после регистрации
+            login(request, user)
             return redirect('trip_list')
     else:
         form = UserCreationForm()
