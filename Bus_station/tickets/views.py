@@ -6,6 +6,13 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import os
 
 class TripForm(forms.ModelForm):
     class Meta:
@@ -13,7 +20,7 @@ class TripForm(forms.ModelForm):
         fields = ['origin', 'destination', 'departure_time', 'price', 'seats_available', 'company']
         widgets = {
             'departure_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'company': forms.Select(),  # Выпадающий список для компаний
+            'company': forms.Select(attrs={'required': 'required'}),
         }
 
 def trip_list(request):
@@ -62,3 +69,39 @@ def register(request):
 def user_profile(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'tickets/user_profile.html', {'orders': orders})
+
+@login_required
+def download_ticket(request, order_id):
+    order = Order.objects.get(id=order_id, user=request.user)
+    
+    # Создание PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ticket_{order.ticket_number}.pdf"'
+
+    # Инициализация canvas
+    p = canvas.Canvas(response, pagesize=A4)
+    
+    # Регистрация шрифта с поддержкой кириллицы
+    font_path = os.path.join(os.path.dirname(__file__), 'static', 'fonts', 'DejaVuSans.ttf')
+    pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+    p.setFont('DejaVuSans', 12)
+
+    # Заголовок
+    p.setFont('DejaVuSans', 16)
+    p.drawString(50 * mm, 270 * mm, "Билет на автобус")
+    
+    # Информация о билете
+    p.setFont('DejaVuSans', 12)
+    p.drawString(50 * mm, 250 * mm, f"Номер билета: {order.ticket_number}")
+    p.drawString(50 * mm, 240 * mm, f"Пассажир: {order.user.username}")
+    p.drawString(50 * mm, 230 * mm, f"Рейс: {order.trip.origin} - {order.trip.destination}")
+    p.drawString(50 * mm, 220 * mm, f"Компания: {order.trip.company.name if order.trip.company else 'Не указана'}")
+    p.drawString(50 * mm, 210 * mm, f"Дата и время отправления: {order.trip.departure_time}")
+    p.drawString(50 * mm, 200 * mm, f"Количество билетов: {order.tickets_count}")
+    p.drawString(50 * mm, 190 * mm, f"Дата заказа: {order.created_at}")
+    p.drawString(50 * mm, 180 * mm, f"Общая стоимость: {order.tickets_count * order.trip.price} руб.")
+
+    # Завершение PDF
+    p.showPage()
+    p.save()
+    return response

@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Личный кабинет</title>
+    {% load static %}
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 </head>
 <body>
@@ -12,19 +13,25 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th>Номер билета</th>
                         <th>Компания</th>
                         <th>Рейс</th>
                         <th>Количество билетов</th>
                         <th>Дата заказа</th>
+                        <th>Действие</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td>{{ order.trip.company.name }}</td>
+                        <td>{{ order.ticket_number }}</td>
+                        <td>{{ order.trip.company.name|default:"Не указана" }}</td>
                         <td>{{ order.trip.origin }} - {{ order.trip.destination }} ({{ order.trip.departure_time }})</td>
                         <td>{{ order.tickets_count }}</td>
                         <td>{{ order.created_at }}</td>
+                        <td>
+                            <a href="{% url 'download_ticket' order.id %}" class="btn btn-primary btn-sm">Скачать билет</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
